@@ -1,12 +1,13 @@
 package morecollectors.collectors;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 
-final class SummingIntCollector<T> implements UnorderedCollector<T, int[], Integer>
+final class SummingIntCollector<T> implements ConcurrentUnorderedCollector<T, AtomicInteger, Integer>
 {
 	private final ToIntFunction<? super T> mapper;
 	
@@ -16,28 +17,26 @@ final class SummingIntCollector<T> implements UnorderedCollector<T, int[], Integ
 	}
 
 	@Override
-	public BiConsumer<int[], T> accumulator()
+	public BiConsumer<AtomicInteger, T> accumulator()
 	{
-		return (array, element) -> {
-			array[0] += mapper.applyAsInt(element);
-		};
+		return (accumulation, inputElement) -> accumulation.getAndAccumulate(mapper.applyAsInt(inputElement), Integer::sum);
 	}
 
 	@Override
-	public BinaryOperator<int[]> combiner()
+	public BinaryOperator<AtomicInteger> combiner()
 	{
-		return (array1, array2) -> new int[] { array1[0] + array2[0] };
+		return (accumulation1, accumulation2) -> new AtomicInteger(accumulation1.get() + accumulation2.get());
 	}
 
 	@Override
-	public Function<int[], Integer> finisher()
+	public Function<AtomicInteger, Integer> finisher()
 	{
-		return array -> array[0];
+		return AtomicInteger::get;
 	}
 
 	@Override
-	public Supplier<int[]> supplier()
+	public Supplier<AtomicInteger> supplier()
 	{
-		return () -> new int[1];
+		return AtomicInteger::new;
 	}
 }

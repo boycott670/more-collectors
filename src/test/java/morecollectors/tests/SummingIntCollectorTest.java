@@ -2,7 +2,7 @@ package morecollectors.tests;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.stream.Stream;
+import java.util.stream.IntStream;
 
 import org.junit.Test;
 
@@ -13,6 +13,6 @@ public class SummingIntCollectorTest
 	@Test
 	public void test()
 	{
-		assertEquals(0, Stream.empty().collect(MoreCollectors.summingInt(Object::hashCode)).intValue());
+		assertEquals(1_000 * 1_000_000, IntStream.generate(() -> 1_000).limit(1_000_000).parallel().boxed().collect(MoreCollectors.summingInt(Integer::intValue)).intValue());
 	}
 }
